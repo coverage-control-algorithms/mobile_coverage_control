@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 """
-Library for generating Voronoi diagrams
+Library for generating the Voronoi polytope around 1 single site.
+
+The algorithm needs the map boundaries, and the coordinates of all the
+agents in the neighbourhood, including the site whose Voronoi polytope
+is wanted to be found.
+
+The algorithm finds the midpoints between the agent and the rest of the
+sites, as well as the unit vector perpendicular to the segment joining
+both sites.
+
+Afterwards, it finds the intersections between every Voronoi segment,
+and filters those outside of the map or closer to other sites.
 """
 # Standard libraries
 import math
