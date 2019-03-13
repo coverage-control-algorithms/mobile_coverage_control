@@ -150,12 +150,35 @@ def get_intersections(segments):
     return intersections
 
 
+def filter_vertices(map_vertices, intersections, sites, index=0):
+    """
+    Remove intersections that do not belong to Voronoi map.
+    """
+    filt_intersecs = np.array([])
+    agent_coords = sites[index]
+    sites = np.copy(sites)
+    sites = np.delete(sites, index, 0)
+    for i, intersection in enumerate(intersections):
+        sites_dists = np.linalg.norm(intersection-sites, axis=1)
+        agent_dist = np.linalg.norm(intersection-agent_coords)
+        # Check if the intersection is closer to any other site.
+        # Subtract a tolerance for avoiding imprecisions.
+        tol = 0.01
+        if np.all(sites_dists>=(agent_dist-tol)):
+            if not len(filt_intersecs):
+                filt_intersecs = intersection
+            else:
+                filt_intersecs = np.vstack((filt_intersecs, intersection))
+    return filt_intersecs
+
+
 def get_voronoi_map(map_vertices, sites, index=0):
     voronoi_verts = []
     voronoi_segments = get_voronoi_segments(map_vertices, sites, index)
     voronoi_verts = get_intersections(voronoi_segments)
-    print(voronoi_segments)
-    return voronoi_verts
+    # Remove intersections out of the map, and those closer to other sites.
+    filtered_verts = filter_vertices(map_vertices, voronoi_verts, sites, 0)
+    return filtered_verts
 
 
 if __name__ == "__main__":
