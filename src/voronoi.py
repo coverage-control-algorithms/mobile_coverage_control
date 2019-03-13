@@ -20,7 +20,7 @@ from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle, Polygon
 import matplotlib.pyplot as plt
 import numpy as np
-# Local libraries
+import yaml
 
 
 def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
@@ -164,8 +164,21 @@ def get_voronoi_map(map_vertices, sites, index=0):
 
 
 if __name__ == "__main__":
-    map_vertices = np.array([[0, 0], [10, 0], [10, 10], [0, 10]])
-    agents_coords = np.array([[3, 5], [7, 6], [1, 1]])
-    voronoi_vertices = get_voronoi_map(map_vertices, agents_coords, 0)
+    # Read the configuration file and parse map and sites coordinates.
+    with open("./config/simulation.yaml", "r") as f: 
+        config = yaml.load(f)
+    # Create an array with map coordinates.
+    map_dict = config["Map"]
+    map_vertices = np.zeros([len(map_dict), 2])
+    for key, value in enumerate(map_dict):
+        map_vertices[key] = np.array(map_dict[value])
+    # Create an array with the sites coordinates.
+    sites_dict = config["Sites"]
+    sites = np.zeros([len(sites_dict), 2])
+    for key, value in enumerate(sites_dict):
+        sites[key] = np.array(sites_dict[value])
 
-    plot_voronoi(map_vertices, agents_coords, voronoi_vertices)
+    # Generate the Voronoi vertices.
+    voronoi_vertices = get_voronoi_map(map_vertices, sites, 0)
+    # Draw vertices in a plot.
+    plot_voronoi(map_vertices, sites, voronoi_vertices)

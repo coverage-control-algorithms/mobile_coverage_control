@@ -1,0 +1,9 @@
+Map:
+  coord1: [0, 0]
+  coord2: [10, 0]
+  coord3: [10, 10]
+  coord4: [0, 10]
+
+Sites:
+  coord1: [1, 2]
+  coord2: [5, 4]
