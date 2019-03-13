@@ -2,6 +2,8 @@
 """
 Library for generating Voronoi diagrams
 """
+# Standard libraries
+import math
 # Third-party libraries
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle, Polygon
@@ -15,6 +17,14 @@ def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
     fig, ax = plt.subplots(1)
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
+    # compute centroid and sort vertices by polar angle.
+    centroid = voronoi_vertices.sum(axis=0) / len(voronoi_vertices)
+    diff = voronoi_vertices-centroid
+    order = np.argsort(np.arctan2(diff[:,1], diff[:, 0]))
+    voronoi_vertices = voronoi_vertices[order]
+    # Draw Voronoi polytope.
+    ax.add_patch(Polygon(voronoi_vertices, True, fill=True, edgecolor="g",
+                         linewidth=2))
     for coords in agents_coords:
         ax.add_patch(Circle(coords, 0.2, color='#FF9900'))
     for voronoi in voronoi_vertices:
@@ -26,9 +36,9 @@ def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
     return
 
 
-def get_voronoi_vertices(map_vertices, sites, index):
+def get_voronoi_segments(map_vertices, sites, index):
     """
-    Create a Voronoi diagram given a bounding map and points coordinates
+    Get Voronoi segments defined by their parametric equations.
 
     :param np.array map_vertices: 2xN array with the coordinates of all
      of the vetices of the map.
@@ -36,61 +46,6 @@ def get_voronoi_vertices(map_vertices, sites, index):
      agents(sites) in the system.
     :param int index: index of the agent(site) whose Voronoi cell is
     wanted to be found.
-
-    NOTE: the arrays are 0-indexed.
-    """
-    map_sides = len(map_vertices)
-    n_sites = len(sites)
-    vertices = np.array(())
-
-    # Get the explicit form of all of the possible Voronoi segments
-    # around the agent. y = m*x + a
-    # Get the explicit form of the polygon sides
-    segments = np.zeros((map_sides+(n_sites-1), 2))
-    diffs = map_vertices - np.roll(map_vertices, -1, axis=0)
-    distances = np.linalg.norm(diffs, axis=1).reshape(map_sides, 1)
-    unit_vectors = diffs / distances
-    m = unit_vectors[:,1]/unit_vectors[:,0]
-    a = map_vertices[:,1] - m*map_vertices[:,0]
-    segments[:map_sides, 0] = m
-    segments[:map_sides, 1] = a
-
-    # Get the explicit form of the segments separating the agents.
-    agent_coords = sites[index]
-    sites = np.delete(sites, index, 0)
-    mid_points = agent_coords + (sites-agent_coords) / 2
-    diffs = sites - agent_coords
-    distances = np.linalg.norm(diffs, axis=1).reshape(n_sites-1, 1)
-    unit_vectors = diffs / distances
-    normal_vectors = np.zeros_like(unit_vectors)
-    normal_vectors[:, 0] = unit_vectors[:, 1]
-    normal_vectors[:, 1] = -unit_vectors[:, 0]
-    m = normal_vectors[:,1]/normal_vectors[:,0]
-    a = mid_points[:,1] - m*mid_points[:,0]
-    segments[map_sides:, 0] = m
-    segments[map_sides:, 1] = a
-    print(segments)
-    # Get the intersection points
-    for index, segment in enumerate(segments):
-        print(index)
-        for _, segment2 in enumerate(segments[index+1:]):
-            x_int = (segment2[1]-segment[1]) / (segment[0]-segment2[0])
-            y_int = segment[0]*x_int + segment[1]
-            intersection = np.array((x_int, y_int))
-            agent_dist = np.linalg.norm(agent_coords-intersection)
-            if (np.linalg.norm(site-intersection)>agent_dist for site in sites):
-                if not vertices.size:
-                    vertices = intersection
-                else:
-                    vertices = np.vstack((vertices, intersection))
-    print(vertices)
-
-    return vertices
-
-
-def get_voronoi_segments(map_vertices, sites, index):
-    """
-    Get Voronoi segments defined by their parametric equations.
     """
     map_sides = len(map_vertices)
     n_sites = len(sites)
@@ -150,7 +105,7 @@ def get_intersections(segments):
     return intersections
 
 
-def filter_vertices(map_vertices, intersections, sites, index=0):
+def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect"):
     """
     Remove intersections that do not belong to Voronoi map.
     """
@@ -158,11 +113,18 @@ def filter_vertices(map_vertices, intersections, sites, index=0):
     agent_coords = sites[index]
     sites = np.copy(sites)
     sites = np.delete(sites, index, 0)
+    # Get rectangle min and max coordinates.
+    if shape=="rect":
+        min_coords = np.array([0, 0])
+        max_coords = np.array([10, 10])
     for i, intersection in enumerate(intersections):
-        sites_dists = np.linalg.norm(intersection-sites, axis=1)
-        agent_dist = np.linalg.norm(intersection-agent_coords)
+        # Check if the intersection is out of the rectangle
+        if np.any(intersection<min_coords) or np.any(intersection>max_coords):
+            continue
         # Check if the intersection is closer to any other site.
         # Subtract a tolerance for avoiding imprecisions.
+        sites_dists = np.linalg.norm(intersection-sites, axis=1)
+        agent_dist = np.linalg.norm(intersection-agent_coords)
         tol = 0.01
         if np.all(sites_dists>=(agent_dist-tol)):
             if not len(filt_intersecs):
@@ -173,7 +135,16 @@ def filter_vertices(map_vertices, intersections, sites, index=0):
 
 
 def get_voronoi_map(map_vertices, sites, index=0):
-    voronoi_verts = []
+    """
+    Call other functions for building a Voronoi diagram.
+
+    :param np.array map_vertices: 2xN array with the coordinates of all
+     of the vetices of the map.
+    :param np.array sites: 2xM array with the coordinates of all of the
+     agents(sites) in the system.
+    :param int index: index of the agent(site) whose Voronoi cell is
+    wanted to be found.
+    """
     voronoi_segments = get_voronoi_segments(map_vertices, sites, index)
     voronoi_verts = get_intersections(voronoi_segments)
     # Remove intersections out of the map, and those closer to other sites.
