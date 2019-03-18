@@ -28,18 +28,20 @@ def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
     fig, ax = plt.subplots(1)
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
-    # compute centroid and sort vertices by polar angle.
-    centroid = voronoi_vertices.sum(axis=0) / len(voronoi_vertices)
-    diff = voronoi_vertices-centroid
-    order = np.argsort(np.arctan2(diff[:,1], diff[:, 0]))
-    voronoi_vertices = voronoi_vertices[order]
-    # Draw Voronoi polytope.
-    ax.add_patch(Polygon(voronoi_vertices, True, fill=True, edgecolor="g",
-                         linewidth=2))
+    for polytop_verts in voronoi_vertices:
+        # compute centroid and sort vertices by polar angle.
+        centroid = polytop_verts.sum(axis=0) / len(polytop_verts)
+        diff = polytop_verts-centroid
+        order = np.argsort(np.arctan2(diff[:,1], diff[:, 0]))
+        polytop_verts = polytop_verts[order]
+        # Draw Voronoi polytope.
+        ax.add_patch(Polygon(polytop_verts, True, fill=False, edgecolor="g",
+                             linewidth=2))
     for coords in agents_coords:
         ax.add_patch(Circle(coords, 0.2, color='#FF9900'))
-    for voronoi in voronoi_vertices:
-        ax.add_patch(Circle(voronoi, 0.2, color='#0022FF'))
+    for agent in voronoi_vertices:
+        for vertices in agent:
+            ax.add_patch(Circle(vertices, 0.2, color='#0022FF'))
     ax.set_xlim(-5, 15)
     ax.set_ylim(-5, 15)
     plt.grid()
@@ -65,7 +67,7 @@ def get_voronoi_segments(map_vertices, sites, index):
     # and the second element is its unit vector.
     segments = np.zeros((map_sides+(n_sites-1), 2, 2))
     # Add border segments to the segments variable
-    diffs = map_vertices - np.roll(map_vertices, 1, axis=0)
+    diffs = map_vertices - np.roll(map_vertices, -1, axis=0)
     distances = np.linalg.norm(diffs, axis=1).reshape(map_sides, 1)
     unit_vectors = diffs / distances
     segments[:map_sides, 0] = map_vertices
@@ -147,7 +149,7 @@ def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect"):
 
 def get_voronoi_map(map_vertices, sites, index=0):
     """
-    Call other functions for building a Voronoi diagram.
+    Call functions for building a Voronoi diagram around one single site
 
     :param np.array map_vertices: 2xN array with the coordinates of all
      of the vetices of the map.
@@ -159,7 +161,7 @@ def get_voronoi_map(map_vertices, sites, index=0):
     voronoi_segments = get_voronoi_segments(map_vertices, sites, index)
     voronoi_verts = get_intersections(voronoi_segments)
     # Remove intersections out of the map, and those closer to other sites.
-    filtered_verts = filter_vertices(map_vertices, voronoi_verts, sites, 0)
+    filtered_verts = filter_vertices(map_vertices, voronoi_verts, sites, index)
     return filtered_verts
 
 
@@ -181,4 +183,4 @@ if __name__ == "__main__":
     # Generate the Voronoi vertices.
     voronoi_vertices = get_voronoi_map(map_vertices, sites, 0)
     # Draw vertices in a plot.
-    plot_voronoi(map_vertices, sites, voronoi_vertices)
+    plot_voronoi(map_vertices, sites, voronoi_vertices[0])

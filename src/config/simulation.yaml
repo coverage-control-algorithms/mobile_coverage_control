@@ -5,5 +5,6 @@ Map:
   coord4: [0, 10]
 
 Sites:
-  coord1: [1, 2]
-  coord2: [5, 4]
+  coord1: [4, 7]
+  coord2: [3, 4]
+  coord3: [5, 6]
