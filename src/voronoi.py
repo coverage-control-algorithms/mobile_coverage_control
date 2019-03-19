@@ -15,6 +15,7 @@ and filters those outside of the map or closer to other sites.
 """
 # Standard libraries
 import math
+import sys
 # Third-party libraries
 from matplotlib.collections import PatchCollection
 from matplotlib.patches import Circle, Polygon
@@ -23,9 +24,8 @@ import numpy as np
 import yaml
 
 
-def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
-    # Create figure and axes
-    fig, ax = plt.subplots(1)
+def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
+    ax.cla()
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
     for polytop_verts in voronoi_vertices:
@@ -45,7 +45,8 @@ def plot_voronoi(map_vertices, agents_coords, voronoi_vertices):
     ax.set_xlim(-5, 15)
     ax.set_ylim(-5, 15)
     plt.grid()
-    plt.show()
+    plt.draw()
+    plt.pause(0.1)
     return
 
 
@@ -118,7 +119,8 @@ def get_intersections(segments):
     return intersections
 
 
-def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect"):
+def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect",
+                    tol=0.01):
     """
     Remove intersections that do not belong to Voronoi map.
     """
@@ -132,13 +134,13 @@ def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect"):
         max_coords = np.array([10, 10])
     for i, intersection in enumerate(intersections):
         # Check if the intersection is out of the rectangle
-        if np.any(intersection<min_coords) or np.any(intersection>max_coords):
+        if (np.any(intersection<min_coords-tol)
+                or np.any(intersection>max_coords+tol)):
             continue
         # Check if the intersection is closer to any other site.
         # Subtract a tolerance for avoiding imprecisions.
         sites_dists = np.linalg.norm(intersection-sites, axis=1)
         agent_dist = np.linalg.norm(intersection-agent_coords)
-        tol = 0.01
         if np.all(sites_dists>=(agent_dist-tol)):
             if not len(filt_intersecs):
                 filt_intersecs = intersection

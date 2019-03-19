@@ -4,6 +4,7 @@ Module containing the main supervisor for the coverage control algorithm
 """
 # Standard libraries
 # Third-party libraries
+import matplotlib.pyplot as plt
 import numpy as np
 import yaml
 # Local libraries
@@ -19,8 +20,8 @@ class Supervisor(object):
         self.vertices = [0] * len(self.sites)
         # Create list containing N agent objects.
         self.agents = []
-        for site in self.sites:
-            self.agents.append(agent.Agent(site))
+        for index, site in enumerate(self.sites):
+            self.agents.append(agent.Agent(site, index))
 
     def parse_config_file(self, filename):
         """
@@ -45,7 +46,7 @@ class Supervisor(object):
             sites[key] = np.array(sites_dict[value])
         return (map_vertices, sites)
 
-    def new_iteration(self):
+    def new_iteration(self, time_step=0.1):
         """
         Iterate the system once.
         """
@@ -55,7 +56,7 @@ class Supervisor(object):
             agent.get_voronoi_cell(self.map, neighbours)
         # Make each of the agents to move
         for index, agent in enumerate(self.agents):
-            self.sites[index] = agent.move()
+            self.sites[index] = agent.move(delta_t=time_step)
         # Get the Voronoi map of all of the agents
         for i, agent in enumerate(self.agents):
             self.vertices[i] = agent.voronoi_cell
@@ -64,6 +65,10 @@ class Supervisor(object):
 
 if __name__=="__main__":
     supervisor = Supervisor()
-    supervisor.new_iteration()
-    voronoi.plot_voronoi(supervisor.map, supervisor.sites, supervisor.vertices)
+    # Create figure and axes
+    fig, ax = plt.subplots(1)
+    for i in range(10000):
+        supervisor.new_iteration()
+        voronoi.plot_voronoi(ax, supervisor.map, supervisor.sites,
+                             supervisor.vertices)
 
