@@ -27,6 +27,9 @@ class Supervisor(object):
         Read the configuration file and parse map and sites coordinates.
         
         :param str filename: Relative path to the configuration file.
+        :returns: (map_vertices, sites) - an array with the M vertices
+         of the map, and another array with the coordinates of the N
+         sites in the system.
         """
         with open(filename, "r") as f: 
             config = yaml.load(f)
@@ -55,7 +58,7 @@ class Supervisor(object):
             self.sites[index] = agent.move()
         # Get the Voronoi map of all of the agents
         for i, agent in enumerate(self.agents):
-            self.vertices[i] = voronoi.get_voronoi_map(self.map, self.sites, i)
+            self.vertices[i] = agent.voronoi_cell
         return
 
 
@@ -63,3 +66,4 @@ if __name__=="__main__":
     supervisor = Supervisor()
     supervisor.new_iteration()
     voronoi.plot_voronoi(supervisor.map, supervisor.sites, supervisor.vertices)
+

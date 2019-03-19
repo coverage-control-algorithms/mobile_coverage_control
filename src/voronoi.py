@@ -147,7 +147,7 @@ def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect"):
     return filt_intersecs
 
 
-def get_voronoi_map(map_vertices, sites, index=0):
+def get_voronoi_cell(map_vertices, sites, index=0):
     """
     Call functions for building a Voronoi diagram around one single site
 
@@ -181,6 +181,6 @@ if __name__ == "__main__":
         sites[key] = np.array(sites_dict[value])
 
     # Generate the Voronoi vertices.
-    voronoi_vertices = get_voronoi_map(map_vertices, sites, 0)
+    voronoi_vertices = get_voronoi_cell(map_vertices, sites, 0)
     # Draw vertices in a plot.
     plot_voronoi(map_vertices, sites, voronoi_vertices[0])
