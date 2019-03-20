@@ -25,6 +25,22 @@ import yaml
 
 
 def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
+    """
+    Draw a Voronoi diagram on an already existing figure and axis.
+
+    This function is meant to be used as a live animation of the
+    Voronoi diagram created by moving agents.
+
+    :param AxesSubplot ax: axis contained in a matplotlib figure, where
+     the passed information will be drawed into.
+    :param np.array map_vertices: 2xN array with the coordinates of all
+     of the N vetices of the map.
+    :param np.array agents_coords: 2xM array with the coordinates of the
+     M agents(sites) in the system.
+    :param np.array voronoi_vertices: MxV array containing the vertices
+     of the Voronoi cells surrounding the M agents. The number V of
+     vertices of each cell is variable for each agent.
+    """
     ax.cla()
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
@@ -42,9 +58,10 @@ def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
     for agent in voronoi_vertices:
         for vertices in agent:
             ax.add_patch(Circle(vertices, 0.2, color='#0022FF'))
-    ax.set_xlim(-5, 15)
-    ax.set_ylim(-5, 15)
-    plt.grid()
+    min_coords = map_vertices.min(axis=0)
+    max_coords = map_vertices.max(axis=0)
+    ax.set_xlim(min_coords[0]-5, max_coords[0]+5)
+    ax.set_ylim(min_coords[1]-5, max_coords[1]+5)
     plt.draw()
     plt.pause(0.1)
     return
@@ -55,8 +72,8 @@ def get_voronoi_segments(map_vertices, sites, index):
     Get Voronoi segments defined by their parametric equations.
 
     :param np.array map_vertices: 2xN array with the coordinates of all
-     of the vetices of the map.
-    :param np.array sites: 2xM array with the coordinates of all of the
+     of N the vetices of the map.
+    :param np.array sites: 2xM array with the coordinates of the M
      agents(sites) in the system.
     :param int index: index of the agent(site) whose Voronoi cell is
     wanted to be found.
@@ -93,9 +110,15 @@ def get_voronoi_segments(map_vertices, sites, index):
 
 def get_intersections(segments):
     """
-    Return all the intersections between the provided segments.
+    Return all the intersections coordinates between the input segments.
 
     More info at http://geomalgorithms.com/a05-_intersect-1.html
+
+    :param np.array segments: Sx2x2 array containing the parameters of
+     the parametric representation of the S segments in the system. The
+     first parameter is a 2x1 array with the coordinates of a point P_0
+     in the segment, and the second parameter is a 2x1 array with the
+     values of the unit vector of the segment.
     """
     intersections = np.array([])
     for index, segment in enumerate(segments):
@@ -123,6 +146,16 @@ def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect",
                     tol=0.01):
     """
     Remove intersections that do not belong to Voronoi map.
+
+    :param np.array map_vertices: 2xN array with the coordinates of all
+     of N the vetices of the map.
+    :param np.array intersections: 2xI array with the coordinates of the
+     I Voronoi unfiltered intersections in the system
+    :param np.array sites: 2xM array with the coordinates of the M
+     agents(sites) in the system.
+    :param int index: index of the agent(site) whose Voronoi cell is
+     wanted to be found.
+    :param str shape: Type of the shape of the map
     """
     filt_intersecs = np.array([])
     agent_coords = sites[index]
@@ -130,8 +163,8 @@ def filter_vertices(map_vertices, intersections, sites, index=0, shape="rect",
     sites = np.delete(sites, index, 0)
     # Get rectangle min and max coordinates.
     if shape=="rect":
-        min_coords = np.array([0, 0])
-        max_coords = np.array([10, 10])
+        min_coords = map_vertices.min()
+        max_coords = map_vertices.max()
     for i, intersection in enumerate(intersections):
         # Check if the intersection is out of the rectangle
         if (np.any(intersection<min_coords-tol)
