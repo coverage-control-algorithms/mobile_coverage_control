@@ -1,0 +1,3 @@
+[submodule "multiagents"]
+	path = multiagents
+	url = https://github.com/coverage-control-algorithms/multiagents.git
