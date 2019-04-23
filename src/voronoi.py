@@ -45,11 +45,6 @@ def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
     for polytop_verts in voronoi_vertices:
-        # compute centroid and sort vertices by polar angle.
-        centroid = polytop_verts.sum(axis=0) / len(polytop_verts)
-        diff = polytop_verts-centroid
-        order = np.argsort(np.arctan2(diff[:,1], diff[:, 0]))
-        polytop_verts = polytop_verts[order]
         # Draw Voronoi polytope.
         ax.add_patch(Polygon(polytop_verts, True, fill=False, edgecolor="g",
                              linewidth=2))

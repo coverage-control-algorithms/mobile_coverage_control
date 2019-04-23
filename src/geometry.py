@@ -36,3 +36,15 @@ def get_polygon_centroid(vertices):
     signed_area *= 0.5
     centroid /= (6.0*signed_area)
     return centroid
+
+
+def sort_polygon_vertices(vertices):
+    """
+    Sort the vertices in order of appearance alongside the perimeter.
+    """
+    # compute centroid and sort vertices by polar angle.
+    inner_point = vertices.sum(axis=0) / len(vertices)
+    diff = vertices-inner_point
+    order = np.argsort(np.arctan2(diff[:,1], diff[:, 0]))
+    ordered_vertices = vertices[order]
+    return ordered_vertices

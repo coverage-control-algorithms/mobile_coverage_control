@@ -71,4 +71,3 @@ if __name__=="__main__":
         supervisor.new_iteration()
         voronoi.plot_voronoi(ax, supervisor.map, supervisor.sites,
                              supervisor.vertices)
-
