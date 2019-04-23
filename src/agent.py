@@ -6,6 +6,7 @@ Module containing the agent class for the coverage control algorithm
 # Third-party libraries
 import numpy as np
 # Local libraries
+import geometry
 import voronoi
 
 class Agent(object):
@@ -34,6 +35,7 @@ class Agent(object):
         """
         sites = np.vstack((self.position, neighbours))
         self.voronoi_cell = voronoi.get_voronoi_cell(map_vertices, sites, 0)
+        self.centroid = geometry.get_polygon_centroid(self.voronoi_cell)
         self.centroid = self.voronoi_cell.sum(axis=0) / len(self.voronoi_cell)
         return self.voronoi_cell
 
