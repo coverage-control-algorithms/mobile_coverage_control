@@ -35,19 +35,22 @@ class Agent(object):
         """
         sites = np.vstack((self.position, neighbours))
         self.voronoi_cell = voronoi.get_voronoi_cell(map_vertices, sites, 0)
+        # Sort the vertices of the cell before calculating the centroid.
+        self.voronoi_cell = geometry.sort_polygon_vertices(self.voronoi_cell)
         self.centroid = geometry.get_polygon_centroid(self.voronoi_cell)
-        self.centroid = self.voronoi_cell.sum(axis=0) / len(self.voronoi_cell)
         return self.voronoi_cell
 
     def get_control_variable(self, Kp=1):
         """
         Get the proportional control variable of the agent.
-        
+
         :param float Kp: Proportional constant of the controller
         :returns: 1xN float array, where N is the number of system
          dimensions. Each element corresponds to the velocity in its
          corresponding dimension.
         """
+        mass = geometry.get_mass(vertices, triangulation)
+        centroid = geometry.get_centre_of_mass(vertices, triangulation, mass)
         dist_to_centroid = self.centroid - self.position
         self.u = dist_to_centroid * Kp
         return self.u
@@ -55,7 +58,7 @@ class Agent(object):
     def get_velocity(self):
         """
         Use control variable for getting agent velocity
-        
+
         :return: 1xN float array, where each element is the velocity in
          each of the N dimensions.
         """
@@ -77,4 +80,3 @@ class Agent(object):
         # Get the new position integrating the velocity through time.
         self.position += vel*delta_t
         return self.position
-
