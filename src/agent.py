@@ -21,6 +21,7 @@ class Agent(object):
         self.voronoi_cell = None
         self.mass = None
         self.centroid = None
+        self.tri = None
         self.velocity = np.array([0, 0])
         self.u = np.array([0, 0])
 
@@ -42,7 +43,7 @@ class Agent(object):
         self.centroid = geometry.get_polygon_centroid(self.voronoi_cell)
         return self.voronoi_cell
 
-    def get_control_variable(self, Kp=1, density_func=lambda x,y: 1):
+    def get_control_variable(self, Kp=1, density_function=lambda x,y: 1):
         """
         Get the proportional control variable of the agent.
 
@@ -51,8 +52,8 @@ class Agent(object):
          dimensions. Each element corresponds to the velocity in its
          corresponding dimension.
         """
-        self.mass, self.centroid = geometry.get_centre_of_mass(
-                self.voronoi_cell, density_func)
+        self.mass, self.centroid, self.tri = geometry.get_centre_of_mass(
+                self.voronoi_cell, density_function)
         dist_to_centroid = self.centroid - self.position
         self.u = dist_to_centroid * Kp
         return self.u
@@ -67,7 +68,7 @@ class Agent(object):
         self.velocity = self.u
         return self.velocity
 
-    def move(self, delta_t):
+    def move(self, delta_t, density_function=lambda x,y: 1):
         """
         Calculate new position of agent based on coverage control.
 
@@ -77,7 +78,7 @@ class Agent(object):
          agent position.
         """
         # Apply control rule for getting the agent velocity.
-        self.get_control_variable()
+        self.get_control_variable(density_function=density_function)
         vel = self.get_velocity()
         # Get the new position integrating the velocity through time.
         self.position += vel*delta_t

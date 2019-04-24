@@ -3,6 +3,7 @@
 Module containing geometric functions for 2-D shapes
 """
 # Standard libraries
+import math
 # Third-party libraries
 import numpy as np
 import scipy.integrate
@@ -52,7 +53,7 @@ def sort_polygon_vertices(vertices):
     return ordered_vertices
 
 
-def get_centre_of_mass(vertices, function=lambda u,v: 1):
+def get_centre_of_mass(vertices, function=lambda x,y: 1):
     """
     Get the mass and centre-of-mass of shape given the density function
 
@@ -68,7 +69,7 @@ def get_centre_of_mass(vertices, function=lambda u,v: 1):
     total_mass = 0
     centroid = np.array([0.0, 0.0])
     # Calculate the mass and centroid of each triangle and add them up.
-    for indices in triangulation.simplices:
+    for index, indices in enumerate(triangulation.simplices):
         tri = vertices[indices]
         a = tri[0]
         b = tri[1]
@@ -78,20 +79,18 @@ def get_centre_of_mass(vertices, function=lambda u,v: 1):
         # Lambda pullback function of the density
         f_pullback = lambda u,v: function(a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]),
                                           a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1]))
-        # Lambda pullback function of the density multiply by the position
-        f_pullback_2 = lambda u,v: f_pullback(u, v) * np.array(
-                [a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]),
-                 a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1])]
-                )
+        # Lambda pullback function of the density multiplied by the position.
+        # It represents the weighted coordinates of a mass.
         f_pullback_2_x = lambda u,v: (f_pullback(u, v)
-                                      * a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]))
+                                      * (a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0])))
         f_pullback_2_y = lambda u,v: (f_pullback(u, v)
-                                      * a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1]))
-        # Integrate
+                                      * (a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1])))
+        # Integrate mass throughout the whole shape.
         mass, _ = scipy.integrate.dblquad(f_pullback, 0, 1, 0, lambda u: 1-u)
         c_x, _ = scipy.integrate.dblquad(f_pullback_2_x, 0, 1, 0, lambda u: 1-u)
         c_y, _ = scipy.integrate.dblquad(f_pullback_2_y, 0, 1, 0, lambda u: 1-u)
         total_mass += mass
-        centre = np.array([c_x, c_y]) / mass
+        centre = np.array([c_x, c_y])
         centroid += centre
-    return (mass, centre)
+    centroid /= total_mass
+    return (total_mass, centroid, triangulation)

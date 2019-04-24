@@ -3,6 +3,7 @@
 Module containing the main supervisor for the coverage control algorithm
 """
 # Standard libraries
+import math
 # Third-party libraries
 import matplotlib.pyplot as plt
 import numpy as np
@@ -18,10 +19,13 @@ class Supervisor(object):
     def __init__(self, config_file="./config/simulation.yaml"):
         self.map, self.sites = self.parse_config_file(config_file)
         self.vertices = [0] * len(self.sites)
+        self.triangles = [0] * len(self.sites)
         # Create list containing N agent objects.
         self.agents = []
         for index, site in enumerate(self.sites):
             self.agents.append(agent.Agent(site, index))
+        # Map density function
+        self.density_func = lambda x,y: math.exp(-((x-10)**2)/10-((y-10)**2)/10)
 
     def parse_config_file(self, filename):
         """
@@ -56,10 +60,11 @@ class Supervisor(object):
             agent.get_voronoi_cell(self.map, neighbours)
         # Make each of the agents to move
         for index, agent in enumerate(self.agents):
-            self.sites[index] = agent.move(delta_t=time_step)
+            self.sites[index] = agent.move(time_step, self.density_func)
         # Get the Voronoi map of all of the agents
         for i, agent in enumerate(self.agents):
             self.vertices[i] = agent.voronoi_cell
+            self.triangles[i] = agent.tri.simplices
         return
 
 
@@ -70,4 +75,4 @@ if __name__=="__main__":
     for i in range(10000):
         supervisor.new_iteration()
         voronoi.plot_voronoi(ax, supervisor.map, supervisor.sites,
-                             supervisor.vertices)
+                             supervisor.vertices, supervisor.triangles)

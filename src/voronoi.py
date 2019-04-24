@@ -14,7 +14,6 @@ Afterwards, it finds the intersections between every Voronoi segment,
 and filters those outside of the map or closer to other sites.
 """
 # Standard libraries
-import math
 import sys
 # Third-party libraries
 from matplotlib.collections import PatchCollection
@@ -24,8 +23,8 @@ import numpy as np
 import yaml
 
 
-def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices,
-                 user_control=True):
+def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices, triangles,
+                 user_control=False):
     """
     Draw a Voronoi diagram on an already existing figure and axis.
 
@@ -45,10 +44,13 @@ def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices,
     ax.cla()
     ax.add_patch(Polygon(map_vertices, True, fill=False, edgecolor="k",
                          linewidth=2))
-    for polytop_verts in voronoi_vertices:
+    for index, polytop_verts in enumerate(voronoi_vertices):
         # Draw Voronoi polytope.
         ax.add_patch(Polygon(polytop_verts, True, fill=False, edgecolor="g",
                              linewidth=2))
+        for triangle  in triangles[index]:
+            ax.add_patch(Polygon(polytop_verts[triangle], True, fill=False,
+                                 edgecolor="y", linewidth=0.2, zorder=10))
     for coords in agents_coords:
         ax.add_patch(Circle(coords, 0.2, color='#FF9900'))
     for agent in voronoi_vertices:
