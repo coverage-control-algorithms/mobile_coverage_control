@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Module containing geometric functions
+Module containing geometric functions for 2-D shapes
 """
 # Standard libraries
 # Third-party libraries
@@ -42,7 +42,7 @@ def get_polygon_centroid(vertices):
 
 def sort_polygon_vertices(vertices):
     """
-    Sort the vertices in order of appearance alongside the perimeter.
+    Sort the vertices in order of appearance alongside the perimeter
     """
     # compute centroid and sort vertices by polar angle.
     inner_point = vertices.sum(axis=0) / len(vertices)
@@ -52,9 +52,9 @@ def sort_polygon_vertices(vertices):
     return ordered_vertices
 
 
-def get_mass(vertices, function):
+def get_centre_of_mass(vertices, function=lambda u,v: 1):
     """
-    Get the mass of a shape, given the density function.
+    Get the mass and centre-of-mass of shape given the density function
 
     :param np.array vertices: Nx2 array with the coordinates of all the
      vertices defining the shape.
@@ -64,9 +64,10 @@ def get_mass(vertices, function):
     """
     # Divide the cell in triangles, so the density function can be 
     # integrated through the whole shape.
-    triangulation = scipy.spatial.Delaunay(self.voronoi_cell)
-    mass = 0
-    # Calculate the mass of each triangle and add them up.
+    triangulation = scipy.spatial.Delaunay(vertices)
+    total_mass = 0
+    centroid = np.array([0.0, 0.0])
+    # Calculate the mass and centroid of each triangle and add them up.
     for indices in triangulation.simplices:
         tri = vertices[indices]
         a = tri[0]
@@ -74,21 +75,23 @@ def get_mass(vertices, function):
         c = tri[2]
         jacobian = (b[0]-a[0]) * (c[1]-a[1]) - (c[0]-a[0]) * (b[1]-a[1])
         jacobian = np.abs(jacobian)
-        f_pullback = lambda u,v: function(a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0])),
+        # Lambda pullback function of the density
+        f_pullback = lambda u,v: function(a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]),
                                           a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1]))
-        mass += scipy.integrate.dblquad(f_pullback, 0, 1, 0, lambda u: 1-u)
-    return mass
-
-def get_centre_of_mass(vertices, function, mass):
-    """
-    Get the centroid of a triangle given its density and mass.
-
-    :param np.array vertices: Nx2 array with the coordinates of all the
-     vertices defining the shape.
-    :param callable function: 2 arguments function representing the
-     density function of the shape.
-    :param float mass: mass of the shape.
-    :returns: (x, y) coordinates of the centre of mass of the shape
-    """
-    centre = np.array([0, 0])
-    return centre
+        # Lambda pullback function of the density multiply by the position
+        f_pullback_2 = lambda u,v: f_pullback(u, v) * np.array(
+                [a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]),
+                 a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1])]
+                )
+        f_pullback_2_x = lambda u,v: (f_pullback(u, v)
+                                      * a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0]))
+        f_pullback_2_y = lambda u,v: (f_pullback(u, v)
+                                      * a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1]))
+        # Integrate
+        mass, _ = scipy.integrate.dblquad(f_pullback, 0, 1, 0, lambda u: 1-u)
+        c_x, _ = scipy.integrate.dblquad(f_pullback_2_x, 0, 1, 0, lambda u: 1-u)
+        c_y, _ = scipy.integrate.dblquad(f_pullback_2_y, 0, 1, 0, lambda u: 1-u)
+        total_mass += mass
+        centre = np.array([c_x, c_y]) / mass
+        centroid += centre
+    return (mass, centre)
