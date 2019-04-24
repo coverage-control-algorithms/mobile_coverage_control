@@ -24,7 +24,8 @@ import numpy as np
 import yaml
 
 
-def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
+def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices,
+                 user_control=True):
     """
     Draw a Voronoi diagram on an already existing figure and axis.
 
@@ -58,7 +59,10 @@ def plot_voronoi(ax, map_vertices, agents_coords, voronoi_vertices):
     ax.set_xlim(min_coords[0]-5, max_coords[0]+5)
     ax.set_ylim(min_coords[1]-5, max_coords[1]+5)
     plt.draw()
-    plt.pause(0.1)
+    if user_control:
+        plt.waitforbuttonpress()
+    else:
+        plt.pause(0.1)
     return
 
 
