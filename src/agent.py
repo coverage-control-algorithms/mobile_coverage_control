@@ -37,6 +37,7 @@ class Agent(object):
          of the Voronoi cell surrounding the agent.
         """
         sites = np.vstack((self.position, neighbours))
+        self.z = self.position - neighbours[0]
         self.voronoi_cell = voronoi.get_voronoi_cell(map_vertices, sites, 0)
         # Sort the vertices of the cell before calculating the centroid.
         self.voronoi_cell = geometry.sort_polygon_vertices(self.voronoi_cell)
@@ -54,8 +55,12 @@ class Agent(object):
         """
         self.mass, self.centroid, self.tri = geometry.get_centre_of_mass(
                 self.voronoi_cell, density_function)
+        # self.centroid = geometry.get_polygon_centroid(self.voronoi_cell)
         dist_to_centroid = self.centroid - self.position
         self.u = dist_to_centroid * Kp
+        # self.u += 0.1*np.array([self.z[1], self.z[0]])
+        # if np.linalg.norm(self.u) <= 0.01:
+        #     import pdb; pdb.set_trace()
         return self.u
 
     def get_velocity(self):

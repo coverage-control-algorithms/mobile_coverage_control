@@ -17,15 +17,34 @@ class Supervisor(object):
     Supervisor class.
     """
     def __init__(self, config_file="./config/simulation.yaml"):
-        self.map, self.sites = self.parse_config_file(config_file)
+        self.map, self.sites, function = self.parse_config_file(config_file)
         self.vertices = [0] * len(self.sites)
         self.triangles = [0] * len(self.sites)
         # Create list containing N agent objects.
         self.agents = []
         for index, site in enumerate(self.sites):
+            print(site)
             self.agents.append(agent.Agent(site, index))
         # Map density function
-        self.density_func = lambda x,y: math.exp(-((x-10)**2)/10-((y-10)**2)/10)
+        if function=="uniform":
+            self.density_func = lambda x,y: 1
+        elif function=="gaussian":
+            x0 = 30
+            y0 = 10
+            sigma=100
+            self.density_func = lambda x,y: math.exp(-((x-x0)**2)/sigma
+                                                     -((y-y0)**2)/sigma)
+        elif function=="ellipse":
+            k = 0.001
+            a = 0.14
+            b = 0.06
+            r = 1.0
+            x_0 = 20.0
+            y_0 = 20.0
+            self.density_func = lambda x,y: math.exp(-k*(a*(x-x_0)**2
+                                                     + b*(y-y_0)**2 - r)**2)
+        else:
+            raise(ValueError, "Invalid function name '{}'".format(function))
 
     def parse_config_file(self, filename):
         """
@@ -48,7 +67,8 @@ class Supervisor(object):
         sites = np.zeros([len(sites_dict), 2])
         for key, value in enumerate(sites_dict):
             sites[key] = np.array(sites_dict[value])
-        return (map_vertices, sites)
+        function = config["Function"]
+        return (map_vertices, sites, function)
 
     def new_iteration(self, time_step=0.1):
         """
