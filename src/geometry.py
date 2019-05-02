@@ -81,16 +81,20 @@ def get_centre_of_mass(vertices, function=lambda x,y: 1):
                                           a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1]))
         # Lambda pullback function of the density multiplied by the position.
         # It represents the weighted coordinates of a mass.
-        f_pullback_2_x = lambda u,v: (f_pullback(u, v)
-                                      * (a[0] + u*(b[0]-a[0]) + v*(c[0]-a[0])))
-        f_pullback_2_y = lambda u,v: (f_pullback(u, v)
-                                      * (a[1] + u*(b[1]-a[1]) + v*(c[1]-a[1])))
+        f_pullback_2_u = lambda u,v: (f_pullback(u, v) * u)
+        f_pullback_2_v = lambda u,v: (f_pullback(u, v) * v)
         # Integrate mass throughout the whole shape.
-        mass, _ = scipy.integrate.dblquad(f_pullback, 0, 1, 0, lambda u: 1-u)
-        c_x, _ = scipy.integrate.dblquad(f_pullback_2_x, 0, 1, 0, lambda u: 1-u)
-        c_y, _ = scipy.integrate.dblquad(f_pullback_2_y, 0, 1, 0, lambda u: 1-u)
+        transformed_mass, _ = scipy.integrate.dblquad(f_pullback, 0, 1, 0,
+                                                      lambda u: 1-u)
+        c_u, _ = scipy.integrate.dblquad(f_pullback_2_u, 0, 1, 0, lambda u: 1-u)
+        c_v, _ = scipy.integrate.dblquad(f_pullback_2_v, 0, 1, 0, lambda u: 1-u)
+        c_u /= transformed_mass
+        c_v /= transformed_mass
+        c_x = a[0] + c_u*(b[0]-a[0]) + c_v*(c[0]-a[0])
+        c_y = a[1] + c_u*(b[1]-a[1]) + c_v*(c[1]-a[1])
+        mass = transformed_mass * jacobian
         total_mass += mass
         centre = np.array([c_x, c_y])
-        centroid += centre
+        centroid += centre * mass
     centroid /= total_mass
     return (total_mass, centroid, triangulation)
