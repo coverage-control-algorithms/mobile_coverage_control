@@ -57,10 +57,9 @@ class Agent(object):
                 self.voronoi_cell, density_function)
         # self.centroid = geometry.get_polygon_centroid(self.voronoi_cell)
         dist_to_centroid = self.centroid - self.position
-        self.u = dist_to_centroid * Kp
-        # self.u += 0.1*np.array([self.z[1], self.z[0]])
-        # if np.linalg.norm(self.u) <= 0.01:
-        #     import pdb; pdb.set_trace()
+        voronoi_gradient = dist_to_centroid * Kp
+        disagreement = 0.01 * np.array([self.z[1], -self.z[0]])
+        self.u = voronoi_gradient + disagreement
         return self.u
 
     def get_velocity(self):
