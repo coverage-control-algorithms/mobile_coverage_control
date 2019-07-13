@@ -24,6 +24,12 @@ class Agent(object):
         self.tri = None
         self.velocity = np.array([0, 0])
         self.u = np.array([0, 0])
+        #self.sf = np.random.uniform(0.7, 1.3)
+        #print(self.sf)
+        self.sf = 1
+        
+        self.alpha = 0*(np.pi)/2
+        self.rot = np.array([[np.cos(self.alpha),-np.sin(self.alpha)],[np.sin(self.alpha),np.cos(self.alpha)]])
 
     def get_voronoi_cell(self, map_vertices, neighbours):
         """
@@ -36,7 +42,12 @@ class Agent(object):
         :returns: 2xV array containing the coordinates of the V vertices
          of the Voronoi cell surrounding the agent.
         """
-        sites = np.vstack((self.position, neighbours))
+
+        for i in range(0,1):
+            neighbours[i] = self.rot.dot(neighbours[i]-self.position)+self.position
+        sites = np.vstack((self.position, self.sf*(neighbours-self.position)+self.position))
+        
+        # sites = np.vstack((self.position,  self.rot.dot(neighbours[0]-self.position)+self.position))
         self.z = self.position - neighbours[0]
         self.voronoi_cell = voronoi.get_voronoi_cell(map_vertices, sites, 0)
         # Sort the vertices of the cell before calculating the centroid.
